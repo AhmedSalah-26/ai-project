@@ -18,7 +18,7 @@ class MazeUI:
         self.create_widgets()
         
         # Load car image
-        self.car_image = Image.open(r"C:/Users/ahmed salah/ai project/Algorithm_Simulator/assest/car.png")  # Replace with the path to your car image
+        self.car_image = Image.open(r"E:/projects\Algorithm_Simulator/assest/car.png")  # Replace with the path to your car image
         
     def create_widgets(self):
         """Create all the UI components."""
@@ -60,10 +60,10 @@ class MazeUI:
         speed_frame = ttk.LabelFrame(left_panel, text="Animation Speed")
         speed_frame.pack(fill=tk.X, pady=(0, 10))
         
-        speed_scale = ttk.Scale(speed_frame, from_=100, to=1000, orient=tk.HORIZONTAL, variable=self.speed_var, command=self.master.update_speed)
+        speed_scale = ttk.Scale(speed_frame, from_=1000, to=100, orient=tk.HORIZONTAL, variable=self.speed_var, command=self.master.update_speed)
         speed_scale.pack(padx=10, pady=10, fill=tk.X)
-        ttk.Label(speed_frame, text="Fast").pack(side=tk.RIGHT, padx=10)
         ttk.Label(speed_frame, text="Slow").pack(side=tk.LEFT, padx=10)
+        ttk.Label(speed_frame, text="Fast").pack(side=tk.RIGHT, padx=10)
         
         # Right panel for maze display and solution
         right_panel = ttk.Frame(main_frame)
@@ -85,7 +85,21 @@ class MazeUI:
     
     def draw_maze(self, maze, current_pos=None, path=None, explored_cells=None):
         """Draw the maze on the canvas."""
-        self.maze_canvas.delete("all")
+        # Only update canvas size if window size has changed
+        window_width = self.master.winfo_width()
+        window_height = self.master.winfo_height()
+        canvas_size = min(window_width * 0.6, window_height * 0.6)  # Use 60% of the smallest window dimension
+        
+        current_width = self.maze_canvas.winfo_width()
+        current_height = self.maze_canvas.winfo_height()
+        
+        if abs(current_width - canvas_size) > 5 or abs(current_height - canvas_size) > 5:
+            self.maze_canvas.config(width=canvas_size, height=canvas_size)
+            self.maze_canvas.update()
+            self.maze_canvas.delete("all")  # Only clear if size changed
+        else:
+            # Clear only dynamic elements (car and path)
+            self.maze_canvas.delete("car", "path", "explored")
         
         # Calculate the size of each cell
         canvas_width = self.maze_canvas.winfo_width()
@@ -93,8 +107,8 @@ class MazeUI:
         
         # Ensure the canvas has a minimum size
         if canvas_width < 50 or canvas_height < 50:
-            canvas_width = max(300, canvas_width)
-            canvas_height = max(300, canvas_height)
+            canvas_width = max(400, canvas_width)
+            canvas_height = max(400, canvas_height)
             self.maze_canvas.config(width=canvas_width, height=canvas_height)
         
         rows = len(maze)
@@ -128,19 +142,21 @@ class MazeUI:
                 else:  # Unexplored path
                     fill_color = "white"
                 
-                # Draw the cell
-                self.maze_canvas.create_rectangle(x1, y1, x2, y2, fill=fill_color, outline="gray")
+                # Draw static cells only if canvas was cleared
+                if abs(current_width - canvas_size) > 5 or abs(current_height - canvas_size) > 5:
+                    self.maze_canvas.create_rectangle(x1, y1, x2, y2, fill=fill_color, outline="gray")
+                elif explored_cells and (i, j) in explored_cells:
+                    # Draw explored cells with tag for easy removal
+                    self.maze_canvas.create_rectangle(x1, y1, x2, y2, fill=fill_color, outline="gray", tags="explored")
         
-        # Draw the current position if provided (moving blue point)
+        # Draw the current position if provided (moving car)
         if current_pos:
             i, j = current_pos
             x1 = j * cell_width
             y1 = i * cell_height
-            x2 = x1 + cell_width
-            y2 = y1 + cell_height
-            
-            # Draw the car image at the current moving position (blue)
-            self.maze_canvas.create_image(x1 + cell_width / 2, y1 + cell_height / 2, image=self.car_photo)
+            # Draw the car image with tag for easy removal
+            self.maze_canvas.create_image(x1 + cell_width / 2, y1 + cell_height / 2, 
+                                        image=self.car_photo, tags="car")
         
         # Draw the path if provided
         if path:
@@ -151,10 +167,10 @@ class MazeUI:
                 x2 = x1 + cell_width
                 y2 = y1 + cell_height
                 
-                # Draw a small circle for each path position
+                # Draw path circles with tag for easy removal
                 self.maze_canvas.create_oval(x1 + cell_width/3, y1 + cell_height/3, 
-                                              x2 - cell_width/3, y2 - cell_height/3, 
-                                              fill="yellow")
+                                           x2 - cell_width/3, y2 - cell_height/3, 
+                                           fill="yellow", tags="path")
     
     def update_solution_text(self, text):
         """Update the solution text display."""

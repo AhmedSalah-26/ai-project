@@ -8,8 +8,15 @@ class MazeSimulator(tk.Tk):
         super().__init__()
         
         self.title("Algorithm Simulator - Maze Pathfinding")
-        self.geometry("800x600")
+        self.geometry("1024x768")
         self.resizable(True, True)
+        
+        # Center the window on screen
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width - 1024) // 2
+        y = (screen_height - 768) // 2
+        self.geometry(f"1024x768+{x}+{y}")
         
         # Set up variables
         self.maze_size = 15  # 15x15 maze by default
@@ -18,6 +25,9 @@ class MazeSimulator(tk.Tk):
         self.current_step = 0
         self.animation_speed = 500  # milliseconds
         self.after_ids = []  # To track animation steps for cancellation
+        
+        # Bind window resize event
+        self.bind("<Configure>", self._on_window_resize)
         
         # Create the UI components
         self.ui = MazeUI(self)
@@ -206,6 +216,16 @@ class MazeSimulator(tk.Tk):
         if self.maze:
             self.ui.draw_maze(self.maze)
         self.ui.status_var.set(status_var_text)
+
+    def _on_window_resize(self, event):
+        """Handle window resize events."""
+        # Only redraw if we have a maze and the event is from the main window
+        if self.maze and event.widget == self:
+            # Redraw the maze with current state
+            current_pos = self.solution_path[self.current_step - 1] if self.solution_path and self.current_step > 0 else None
+            self.ui.draw_maze(self.maze, current_pos, 
+                             self.solution_path[:self.current_step] if self.solution_path else None, 
+                             self.explored_cells)
 
 if __name__ == "__main__":
     app = MazeSimulator()
