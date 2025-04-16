@@ -98,10 +98,15 @@ class PuzzleSimulator(tk.Tk):
         """Start the simulation with the selected algorithm."""
         import time
         import tkinter.messagebox as messagebox
+        import threading
+        import queue
         
         if self.board is None:
             messagebox.showerror("Error", "Please generate a puzzle first.")
             return
+        
+        # Create a queue for thread communication
+        result_queue = queue.Queue()
         
         # Create the initial and goal states
         initial_state = PuzzleState(self.board)
@@ -119,81 +124,102 @@ class PuzzleSimulator(tk.Tk):
         
         start_time = time.time()
         
-        try:
-            if algorithm == "A*":
-                self.solution_path, stop_reason = solver.solve_a_star()
-            elif algorithm == "Breadth-First Search (BFS)":
-                self.solution_path, stop_reason = solver.solve_bfs()
-            elif algorithm == "Depth-First Search (DFS)":
-                self.solution_path, stop_reason = solver.solve_dfs()
-            elif algorithm == "Greedy Search":
-                self.solution_path, stop_reason = solver.solve_greedy()
-            elif algorithm == "Uniform Cost Search":
-                self.solution_path, stop_reason = solver.solve_uniform_cost()
-            elif algorithm == "Genetic Algorithm":
-                self.solution_path, stop_reason = solver.solve_genetic()
+        def solve_puzzle():
+            try:
+                if algorithm == "A*":
+                    solution = solver.solve_a_star()
+                elif algorithm == "Breadth-First Search (BFS)":
+                    solution = solver.solve_bfs()
+                elif algorithm == "Depth-First Search (DFS)":
+                    solution = solver.solve_dfs()
+                elif algorithm == "Greedy Search":
+                    solution = solver.solve_greedy()
+                elif algorithm == "Uniform Cost Search":
+                    solution = solver.solve_uniform_cost()
+                elif algorithm == "Genetic Algorithm":
+                    solution = solver.solve_genetic()
+                result_queue.put((True, solution))
+            except Exception as e:
+                result_queue.put((False, e))
+        
+        # Start solving in background thread
+        solver_thread = threading.Thread(target=solve_puzzle)
+        solver_thread.daemon = True  # Thread will be terminated when main program exits
+        solver_thread.start()
+        
+        def check_solution():
+            if solver_thread.is_alive():
+                # Still solving, check again in 100ms
+                self.after(100, check_solution)
+                return
             
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-            
-            if self.solution_path:
-                # Display the solution
-                solution_text = f"Solution found with {algorithm} in {elapsed_time:.2f} seconds\n"
-                solution_text += f"Total Steps: {len(self.solution_path)}\n\nPath:\n"
+            try:
+                success, result = result_queue.get_nowait()
+                end_time = time.time()
+                elapsed_time = end_time - start_time
                 
-                for i, move in enumerate(self.solution_path, 1):
-                    solution_text += f"{i}. {move}\n"
-                
-                self.ui.update_solution_text(solution_text)
-                self.ui.status_var.set(f"Solution found with {len(self.solution_path)} steps")
-                
-                # Start the animation
-                self.current_step = 0
-                self.animate_solution()
-            else:
-                if stop_reason == "timeout":
-                    message = f"Timeout reached after {elapsed_time:.2f} seconds. The {algorithm} algorithm couldn't find a solution in time."
-                    if self.puzzle_size == 4:
-                        message += "\n\nNote: 4x4 puzzles have a much larger state space and may take longer to solve."
-                        message += "\nTry using a different algorithm or generating a simpler puzzle."
-                elif stop_reason == "state_limit":
-                    message = f"State limit reached after exploring {solver.max_states:,} states. The {algorithm} algorithm stopped to prevent excessive memory usage."
-                    if self.puzzle_size == 4:
-                        message += "\n\nNote: 4x4 puzzles have a much larger state space and require more memory."
-                        message += "\nTry using a different algorithm or generating a simpler puzzle."
+                if success:
+                    self.solution_path, stop_reason = result
+                    if self.solution_path:
+                        # Display the solution
+                        solution_text = f"Solution found with {algorithm} in {elapsed_time:.2f} seconds\n"
+                        solution_text += f"Total Steps: {len(self.solution_path)}\n\nPath:\n"
+                        
+                        for i, move in enumerate(self.solution_path, 1):
+                            solution_text += f"{i}. {move}\n"
+                        
+                        self.ui.update_solution_text(solution_text)
+                        self.ui.status_var.set(f"Solution found with {len(self.solution_path)} steps")
+                        
+                        # Start the animation
+                        self.current_step = 0
+                        self.animate_solution()
+                    else:
+                        if stop_reason == "timeout":
+                            message = f"Timeout reached after {elapsed_time:.2f} seconds. The {algorithm} algorithm couldn't find a solution in time."
+                            if self.puzzle_size == 4:
+                                message += "\n\nNote: 4x4 puzzles have a much larger state space and may take longer to solve."
+                                message += "\nTry using a different algorithm or generating a simpler puzzle."
+                        elif stop_reason == "state_limit":
+                            message = f"State limit reached after exploring {solver.max_states:,} states. The {algorithm} algorithm stopped to prevent excessive memory usage."
+                            if self.puzzle_size == 4:
+                                message += "\n\nNote: 4x4 puzzles have a much larger state space and require more memory."
+                                message += "\nTry using a different algorithm or generating a simpler puzzle."
+                        else:
+                            message = f"No solution found with {algorithm} in {elapsed_time:.2f} seconds."
+                        
+                        self.ui.update_solution_text(message)
+                        self.ui.status_var.set("No solution found")
                 else:
-                    message = f"No solution found with {algorithm} in {elapsed_time:.2f} seconds."
-                
-                self.ui.update_solution_text(message)
-                self.ui.status_var.set("No solution found")
+                    error = result
+                    if isinstance(error, MemoryError):
+                        message = f"Out of memory error while solving with {algorithm} after {elapsed_time:.2f} seconds.\n"
+                        if self.puzzle_size == 4:
+                            message += "4x4 puzzles require significantly more memory.\n\n"
+                            message += "Recommendations:\n"
+                            message += "1. Try a different algorithm (A* or Greedy usually work best)\n"
+                            message += "2. Try a 3x3 puzzle instead\n"
+                            message += "3. Generate a new random puzzle that might be easier to solve"
+                        self.ui.update_solution_text(message)
+                        self.ui.status_var.set("Out of memory error")
+                        print(f"Memory error in {algorithm} for {self.puzzle_size}x{self.puzzle_size} puzzle")
+                    else:
+                        message = f"Error occurred while solving with {algorithm} after {elapsed_time:.2f} seconds.\n"
+                        message += f"Error details: {str(error)}\n\n"
+                        if self.puzzle_size == 4:
+                            message += "Note: 4x4 puzzles are much more complex and may cause errors.\n"
+                            message += "Try using a different algorithm or generating a simpler puzzle configuration."
+                        self.ui.update_solution_text(message)
+                        self.ui.status_var.set("Error occurred")
+                        print(f"Error in {algorithm} for {self.puzzle_size}x{self.puzzle_size} puzzle: {error}")
+                        import traceback
+                        traceback.print_exc()
+            except queue.Empty:
+                # Queue is empty but thread is done - should never happen
+                self.ui.status_var.set("Error: No result from solver")
         
-        except MemoryError:
-            end_time = time.time()
-            message = f"Out of memory error while solving with {algorithm} after {end_time - start_time:.2f} seconds.\n"
-            if self.puzzle_size == 4:
-                message += "4x4 puzzles require significantly more memory.\n\n"
-                message += "Recommendations:\n"
-                message += "1. Try a different algorithm (A* or Greedy usually work best)\n"
-                message += "2. Try a 3x3 puzzle instead\n"
-                message += "3. Generate a new random puzzle that might be easier to solve"
-            self.ui.update_solution_text(message)
-            self.ui.status_var.set("Out of memory error")
-            # Print detailed error information for debugging
-            print(f"Memory error in {algorithm} for {self.puzzle_size}x{self.puzzle_size} puzzle")
-        
-        except Exception as e:
-            end_time = time.time()
-            message = f"Error occurred while solving with {algorithm} after {end_time - start_time:.2f} seconds.\n"
-            message += f"Error details: {str(e)}\n\n"
-            if self.puzzle_size == 4:
-                message += "Note: 4x4 puzzles are much more complex and may cause errors.\n"
-                message += "Try using a different algorithm or generating a simpler puzzle configuration."
-            self.ui.update_solution_text(message)
-            self.ui.status_var.set("Error occurred")
-            # Print detailed error information for debugging
-            print(f"Error in {algorithm} for {self.puzzle_size}x{self.puzzle_size} puzzle: {e}")
-            import traceback
-            traceback.print_exc()
+        # Start checking for solution
+        check_solution()
     
     def animate_solution(self):
         """Animate the solution step by step."""
