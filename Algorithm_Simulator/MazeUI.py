@@ -37,7 +37,9 @@ class MazeUI:
         ttk.Radiobutton(size_frame, text="10x10", variable=self.size_var, value=10, command=self.master.change_maze_size).pack(anchor=tk.W, padx=10, pady=5)
         ttk.Radiobutton(size_frame, text="15x15", variable=self.size_var, value=15, command=self.master.change_maze_size).pack(anchor=tk.W, padx=10, pady=5)
         ttk.Radiobutton(size_frame, text="20x20", variable=self.size_var, value=20, command=self.master.change_maze_size).pack(anchor=tk.W, padx=10, pady=5)
-        
+        ttk.Radiobutton(size_frame, text="30x30", variable=self.size_var, value=30, command=self.master.change_maze_size).pack(anchor=tk.W, padx=10, pady=5)
+        ttk.Radiobutton(size_frame, text="40x40", variable=self.size_var, value=40, command=self.master.change_maze_size).pack(anchor=tk.W, padx=10, pady=5)
+
         # Algorithm selection
         algo_frame = ttk.LabelFrame(left_panel, text="Algorithm")
         algo_frame.pack(fill=tk.X, pady=(0, 10))
@@ -60,7 +62,7 @@ class MazeUI:
         speed_frame = ttk.LabelFrame(left_panel, text="Animation Speed")
         speed_frame.pack(fill=tk.X, pady=(0, 10))
         
-        speed_scale = ttk.Scale(speed_frame, from_=1000, to=100, orient=tk.HORIZONTAL, variable=self.speed_var, command=self.master.update_speed)
+        speed_scale = ttk.Scale(speed_frame, from_=1000, to=0.1, orient=tk.HORIZONTAL, variable=self.speed_var, command=self.master.update_speed)
         speed_scale.pack(padx=10, pady=10, fill=tk.X)
         ttk.Label(speed_frame, text="Slow").pack(side=tk.LEFT, padx=10)
         ttk.Label(speed_frame, text="Fast").pack(side=tk.RIGHT, padx=10)
