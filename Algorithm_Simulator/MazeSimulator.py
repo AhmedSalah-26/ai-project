@@ -142,12 +142,17 @@ class MazeSimulator(tk.Tk):
                 # Revert to previous position
                 current_pos = self.solution_path[-1]
         
-        # Update the solution text
+        # Update the solution text with waiting status
+        self.ui.update_solution_text("⏳ Finding solution...")
+        self.update()
+        
+        # Update the solution text with results
         elapsed_time = time.time() - start_time
         solution_text = f"Algorithm: {algorithm}\n"
         solution_text += f"Path length: {len(solution)}\n"
         solution_text += f"Explored cells: {len(self.explored_cells)}\n"
         solution_text += f"Time taken: {elapsed_time:.4f} seconds\n"
+        solution_text += "\n🚗 Animating solution path..."
         
         self.ui.update_solution_text(solution_text)
         
