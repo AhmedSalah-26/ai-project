@@ -7,6 +7,7 @@ class SimulatorStartPage(tk.Tk):
     def __init__(self):
         super().__init__()
 
+
         self.title("🚀 Algorithm Simulator")
         self.geometry("700x500")
         self.configure(bg="#f0f2f5")
