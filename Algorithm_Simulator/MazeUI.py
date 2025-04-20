@@ -18,7 +18,7 @@ class MazeUI:
         self.create_widgets()
         
         # Load car image
-        self.car_image = Image.open(r"E:/projects\Algorithm_Simulator/assest/car.png")  # Replace with the path to your car image
+        self.car_image = Image.open(r"assest/car.png")  # Replace with the path to your car image
         
     def create_widgets(self):
         """Create all the UI components."""
