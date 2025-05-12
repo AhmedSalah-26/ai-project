@@ -11,7 +11,7 @@ class MazeSimulator(tk.Tk):
         self.geometry("1024x768")
         self.resizable(True, True)
         
-        # Center the window on screen
+  
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         x = (screen_width - 1024) // 2
@@ -19,20 +19,17 @@ class MazeSimulator(tk.Tk):
         self.geometry(f"1024x768+{x}+{y}")
         
         # Set up variables
-        self.maze_size = 15  # 15x15 maze by default
+        self.maze_size = 15 
         self.maze = None
         self.solution_path = None
         self.current_step = 0
-        self.animation_speed = 500  # milliseconds
-        self.after_ids = []  # To track animation steps for cancellation
+        self.animation_speed = 500  
+        self.after_ids = []  
         
-        # Bind window resize event
         self.bind("<Configure>", self._on_window_resize)
         
-        # Create the UI components
         self.ui = MazeUI(self)
         
-        # Generate a random maze to start
         self.generate_new_maze()
     
     def change_maze_size(self):
@@ -50,14 +47,11 @@ class MazeSimulator(tk.Tk):
     
     def generate_new_maze(self):
         """Generate a new random maze."""
-        # Create a maze generator and generate a new maze
         generator = MazeGenerator(self.maze_size, self.maze_size)
         self.maze = generator.generate_dfs_maze()
         
-        # Reset the simulation state
         self._reset_state()
         
-        # Update the display
         self._update_display(
             "New maze generated. Select an algorithm to start the simulation.",
             "New maze generated"
@@ -68,18 +62,15 @@ class MazeSimulator(tk.Tk):
         import time
         import tkinter.messagebox as messagebox
         
-        # Cancel any ongoing animation
         for after_id in self.after_ids:
             self.after_cancel(after_id)
         self.after_ids = []
         
-        # Reset the simulation state
         self._reset_state()
         
-        # Get the selected algorithm
         algorithm = self.ui.algorithm_var.get()
         
-        # Create a solver and find a solution
+
         # Set the start and goal positions
         start_pos = (0, 0)  # Top-left corner
         goal_pos = (self.maze_size-1, self.maze_size-1)  # Bottom-right corner
@@ -87,7 +78,6 @@ class MazeSimulator(tk.Tk):
         solver = MazeSolver(self.maze, start_pos, goal_pos)
         start_time = time.time()
         
-        # Run the selected algorithm
         if "A*" in algorithm:
             solution, error = solver.solve_a_star()
         elif "Breadth-First" in algorithm:
@@ -98,11 +88,12 @@ class MazeSimulator(tk.Tk):
             solution, error = solver.solve_greedy()
         elif "Uniform Cost" in algorithm:
             solution, error = solver.solve_uniform_cost()
+        elif "Q-Learning" in algorithm:
+            solution, error = solver.solve_q_learning()
         else:
             messagebox.showerror("Error", f"Algorithm '{algorithm}' not implemented yet.")
             return
         
-        # Check if a solution was found
         if not solution:
             error_msg = "No solution found"
             if error:
@@ -110,16 +101,12 @@ class MazeSimulator(tk.Tk):
             messagebox.showinfo("No Solution", error_msg)
             return
         
-        # Store the solution path and explored cells
         self.solution_path = []
-        self.explored_cells = solver.get_explored_cells()  # Get explored cells from solver
-        # Convert the path of moves to a path of positions
+        self.explored_cells = solver.get_explored_cells() 
         current_pos = start_pos
         self.solution_path.append(current_pos)
         
-        # Follow the solution path to get all positions
         for move in solution:
-            # Extract direction from move description (e.g., "Move right" -> "right")
             direction = move.split()[-1]
             
             # Update current position based on direction
@@ -136,17 +123,13 @@ class MazeSimulator(tk.Tk):
             if 0 <= current_pos[0] < self.maze_size and 0 <= current_pos[1] < self.maze_size and self.maze[current_pos[0]][current_pos[1]] != 1:
                 self.solution_path.append(current_pos)
             else:
-                # If we hit a wall, something is wrong with the solution
-                # Log the error and continue
+
                 print(f"Warning: Invalid move to {current_pos} (wall or out of bounds)")
-                # Revert to previous position
                 current_pos = self.solution_path[-1]
         
-        # Update the solution text with waiting status
         self.ui.update_solution_text("⏳ Finding solution...")
         self.update()
         
-        # Update the solution text with results
         elapsed_time = time.time() - start_time
         solution_text = f"Algorithm: {algorithm}\n"
         solution_text += f"Path length: {len(solution)}\n"
@@ -156,7 +139,6 @@ class MazeSimulator(tk.Tk):
         
         self.ui.update_solution_text(solution_text)
         
-        # Start the animation
         self._animate_solution()
     
     def _animate_solution(self):
@@ -164,16 +146,12 @@ class MazeSimulator(tk.Tk):
         if not self.solution_path or self.current_step >= len(self.solution_path):
             return
         
-        # Get the current position
         current_pos = self.solution_path[self.current_step]
         
-        # Draw the maze with the current position and explored cells
         self.ui.draw_maze(self.maze, current_pos, self.solution_path[:self.current_step], self.explored_cells)
         
-        # Increment the step counter
         self.current_step += 1
         
-        # Schedule the next animation step
         if self.current_step < len(self.solution_path):
             after_id = self.after(self.animation_speed, self._animate_solution)
             self.after_ids.append(after_id)
@@ -188,17 +166,14 @@ class MazeSimulator(tk.Tk):
     
     def _reset_state(self):
         """Reset the simulation state variables."""
-        # Cancel any ongoing animation
         for after_id in self.after_ids:
             self.after_cancel(after_id)
         self.after_ids = []
         
-        # Reset the solution path, explored cells and current step
         self.solution_path = None
         self.explored_cells = None
         self.current_step = 0
         
-        # Update the display
         if self.maze:
             self.ui.draw_maze(self.maze)
         self.ui.update_solution_text("")
@@ -208,8 +183,7 @@ class MazeSimulator(tk.Tk):
         The slider is set from 100 (fast) to 1000 (slow),
         so we need to use the value directly as the delay in milliseconds.
         """
-        # Convert to float first, then to integer to handle floating point values from the scale widget
-        self.animation_speed = int(float(value))  # Convert to integer as the scale passes a string
+        self.animation_speed = int(float(value))  
     
     def algorithm_changed(self, event):
         """Handle algorithm selection change."""
@@ -224,13 +198,19 @@ class MazeSimulator(tk.Tk):
 
     def _on_window_resize(self, event):
         """Handle window resize events."""
-        # Only redraw if we have a maze and the event is from the main window
         if self.maze and event.widget == self:
             # Redraw the maze with current state
             current_pos = self.solution_path[self.current_step - 1] if self.solution_path and self.current_step > 0 else None
             self.ui.draw_maze(self.maze, current_pos, 
-                             self.solution_path[:self.current_step] if self.solution_path else None, 
-                             self.explored_cells)
+                            self.solution_path[:self.current_step] if self.solution_path else None, 
+                            self.explored_cells)
+
+    def return_to_home(self):
+        """Return to the home page."""
+        self.destroy()
+        from simulator import SimulatorStartPage
+        app = SimulatorStartPage()
+        app.mainloop()
 
 if __name__ == "__main__":
     app = MazeSimulator()

@@ -8,7 +8,7 @@ class SimulatorStartPage(tk.Tk):
         super().__init__()
 
 
-        self.title("🚀 Algorithm Simulator")
+        self.title("Algorithm Simulator")
         self.geometry("700x500")
         self.configure(bg="#f0f2f5")
         self.resizable(False, False)
@@ -38,23 +38,23 @@ class SimulatorStartPage(tk.Tk):
 
         # Maze Card
         self.create_card(cards_frame,
-                         title="🧩 Maze Simulator",
-                         desc="Explore mazes using pathfinding algorithms.",
-                         button_text="Launch Maze",
-                         command=self.launch_maze_simulator).grid(row=0, column=0, padx=20)
+                        title="Maze Simulator",
+                        desc="Explore mazes using pathfinding algorithms.",
+                        button_text="Launch Maze",
+                        command=self.launch_maze_simulator).grid(row=0, column=0, padx=20)
 
         # Puzzle Card
         self.create_card(cards_frame,
-                         title="🧠 Puzzle Simulator",
-                         desc="Solve puzzles using smart search algorithms.",
-                         button_text="Launch Puzzle",
-                         command=self.launch_puzzle_simulator).grid(row=0, column=1, padx=20)
+                        title="Puzzle Simulator",
+                        desc="Solve puzzles using smart search algorithms.",
+                        button_text="Launch Puzzle",
+                        command=self.launch_puzzle_simulator).grid(row=0, column=1, padx=20)
 
         # Footer
         footer = ttk.Frame(main_frame)
         footer.pack(pady=(40, 10))
 
-        ttk.Button(footer, text="❌ Exit", command=self.destroy).pack()
+        ttk.Button(footer, text="Exit", command=self.destroy).pack()
 
     def create_card(self, parent, title, desc, button_text, command):
         card = ttk.Frame(parent, padding=20, relief="raised", borderwidth=2)
