@@ -27,8 +27,8 @@ python simulator.py
 ```
 
 ### Features
-- 🧩 Maze Simulator: Visualize pathfinding algorithms
-- 🧠 Puzzle Simulator: Solve puzzles using search algorithms
+-  Maze Simulator: Visualize pathfinding algorithms
+-  Puzzle Simulator: Solve puzzles using search algorithms
 
 ### Usage
 1. Launch the application
