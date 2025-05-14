@@ -5,11 +5,11 @@
 ### Prerequisites
 - Python 3.8 or higher
 - pip package manager
-
+- 
 ### Installation Steps
 1. Clone this repository:
    ```
-   git clone https://github.com/yourusername/Algorithm_Simulator.git
+   git clone https://github.com/AhmedSalah-26/ai-project.git
    ```
 2. Navigate to the project directory:
    ```
