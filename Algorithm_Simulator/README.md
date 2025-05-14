@@ -7,15 +7,12 @@
 - pip package manager
 - 
 ### Installation Steps
-1. Clone this repository:
-   ```
-   git clone https://github.com/AhmedSalah-26/ai-project.git
-   ```
-2. Navigate to the project directory:
+
+1. Navigate to the project directory:
    ```
    cd Algorithm_Simulator
    ```
-3. Install required dependencies:
+2. Install required dependencies:
    ```
    pip install -r requirements.txt
    ```
